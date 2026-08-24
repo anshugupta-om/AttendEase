@@ -1,0 +1,6 @@
+{
+  "name": "AttendEase",
+  "description": "Smart Student Attendance Tracker with automated timetable PDF extraction, daily class marking, subject analytics, calendar history, and PDF reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
