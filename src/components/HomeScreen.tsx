@@ -50,12 +50,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   // Helper to find record status for a given slot on today
-  const getSlotStatus = (slotId: string, subjectCode: string): AttendanceStatus | undefined => {
-    const rec = records.find(r => r.date === todayDateStr && (r.lectureId === slotId || r.subjectCode === subjectCode));
+  const getSlotStatus = (slotId: string): AttendanceStatus | undefined => {
+    const rec = records.find(r => r.date === todayDateStr && r.lectureId === slotId);
     return rec?.status;
   };
 
-  const markedTodayCount = slots.filter(s => getSlotStatus(s.id, s.subjectCode) === 'Present').length;
+  const markedTodayCount = slots.filter(s => getSlotStatus(s.id) === 'Present').length;
   const isToday = selectedDay === todayDayName;
 
   return (
@@ -177,7 +177,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         /* Technical Spec Card List */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {slots.map((slot, index) => {
-            const currentStatus = isToday ? getSlotStatus(slot.id, slot.subjectCode) : undefined;
+            const currentStatus = isToday ? getSlotStatus(slot.id) : undefined;
             const isPresent = currentStatus === 'Present';
             const isAbsent = currentStatus === 'Absent';
 
