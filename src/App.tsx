@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { AttendanceRecord, AttendanceStatus, NavTab, Timetable, UserProfile } from './types';
+import { AttendanceRecord, AttendanceStatus, Timetable, UserProfile } from './types';
 import {
   defaultUser,
   getAttendanceRecords,
@@ -18,6 +18,7 @@ import {
   saveUserProfile,
   clearAllData,
 } from './lib/storage';
+import { auth } from './lib/firebase';
 import { Header } from './components/Header';
 import { NavTab as TabType, Navigation } from './components/Navigation';
 import { HomeScreen } from './components/HomeScreen';
@@ -30,13 +31,18 @@ import { ProfileSetupModal } from './components/ProfileSetupModal';
 import { TimetableUploadModal } from './components/TimetableUploadModal';
 import { PdfExportModal } from './components/PdfExportModal';
 import { DisputeClaimModal } from './components/DisputeClaimModal';
+import { LandingPage } from './components/LandingPage';
 
 export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [timetable, setTimetable] = useState<Timetable>(getTimetable());
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('home');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const stored = localStorage.getItem('attendease_theme_preference');
+    return (stored === 'light' || stored === 'dark') ? stored : 'dark';
+  });
 
   // Modals state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -45,44 +51,77 @@ export default function App() {
   const [isPdfExportOpen, setIsPdfExportOpen] = useState(false);
   const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
 
-  // Initialize on mount
+  // Initialize and listen to Firebase auth state changes on mount
   useEffect(() => {
-    const profile = getUserProfile();
-    const tt = getTimetable();
-    setTimetable(tt);
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (firebaseUser) {
+        // Load or create UserProfile for this specific authenticated user
+        let profile = getUserProfile(firebaseUser.uid);
+        if (!profile) {
+          profile = {
+            id: firebaseUser.uid,
+            firebaseUid: firebaseUser.uid,
+            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Student',
+            email: firebaseUser.email || '',
+            branch: 'AIML',
+            year: 'Second Year',
+            semester: 3,
+            section: 'A',
+            collegeName: 'National Institute of Technology',
+            firstTimeSetupCompleted: false, // Forces setup modal trigger
+            themePreference: 'light'
+          };
+          saveUserProfile(profile);
+        }
+        
+        setUser(profile);
 
-    if (profile) {
-      setUser(profile);
-      initializeDemoHistory(profile.id, tt);
-    } else {
-      // Default to logged-in demo user for instant usability
-      const demo = defaultUser;
-      setUser(demo);
-      saveUserProfile(demo);
-      initializeDemoHistory(demo.id, tt);
-    }
+        // Sync theme with user profile preference
+        const userTheme = profile.themePreference === 'light' ? 'light' : 'dark';
+        setTheme(userTheme);
+        localStorage.setItem('attendease_theme_preference', userTheme);
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(userTheme);
+        
+        // Scope timetable and records under this user's UID
+        const tt = getTimetable(firebaseUser.uid);
+        setTimetable(tt);
+        initializeDemoHistory(firebaseUser.uid, tt);
+        setRecords(getAttendanceRecords(firebaseUser.uid));
 
-    setRecords(getAttendanceRecords());
+        setIsAuthOpen(false);
 
-    // Check system or stored theme
-    const storedTheme = localStorage.getItem('attendease_theme');
-    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      setTheme('dark');
-      document.documentElement.classList.add('dark');
-    } else {
-      setTheme('light');
-      document.documentElement.classList.remove('dark');
-    }
+        // Open profile setup if first time setup is incomplete
+        if (!profile.firstTimeSetupCompleted) {
+          setIsProfileSetupOpen(true);
+        }
+      } else {
+        setUser(null);
+        setRecords([]);
+      }
+      setAuthLoading(false);
+    });
+
+    // Initialize theme based on preference
+    const initialTheme = localStorage.getItem('attendease_theme_preference') as 'light' | 'dark' || 'dark';
+    setTheme(initialTheme);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(initialTheme);
+
+    return () => unsubscribe();
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
-    localStorage.setItem('attendease_theme', nextTheme);
-    if (nextTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('attendease_theme_preference', newTheme);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(newTheme);
+
+    if (user) {
+      const updatedProfile = { ...user, themePreference: newTheme };
+      setUser(updatedProfile);
+      saveUserProfile(updatedProfile);
     }
   };
 
@@ -95,7 +134,7 @@ export default function App() {
     if (!user) return;
     const todayStr = new Date().toISOString().split('T')[0];
     recordAttendance(user.id, todayStr, lectureId, subjectCode, subjectName, status);
-    setRecords(getAttendanceRecords());
+    setRecords(getAttendanceRecords(user.id));
   };
 
   const handleMarkAttendanceOnDate = (
@@ -107,7 +146,7 @@ export default function App() {
   ) => {
     if (!user) return;
     recordAttendance(user.id, dateStr, lectureId, subjectCode, subjectName, status);
-    setRecords(getAttendanceRecords());
+    setRecords(getAttendanceRecords(user.id));
   };
 
   const handlePresentAll = () => {
@@ -117,12 +156,13 @@ export default function App() {
     const dayName = todayObj.toLocaleDateString('en-US', { weekday: 'long' });
 
     markTodayAllPresent(user.id, timetable, todayStr, dayName);
-    setRecords(getAttendanceRecords());
+    setRecords(getAttendanceRecords(user.id));
   };
 
   const handleTimetableParsed = (newTimetable: Timetable) => {
+    if (!user) return;
     setTimetable(newTimetable);
-    saveTimetable(newTimetable);
+    saveTimetable(newTimetable, user.id);
   };
 
   const handleSaveProfile = (profile: UserProfile) => {
@@ -131,31 +171,51 @@ export default function App() {
     setIsProfileSetupOpen(false);
   };
 
-  const handleLogout = () => {
-    clearAllData();
-    setUser(null);
-    setIsAuthOpen(true);
-  };
-
-  const handleLoginSuccess = (loginUser: UserProfile) => {
-    setUser(loginUser);
-    saveUserProfile(loginUser);
-    initializeDemoHistory(loginUser.id, timetable);
-    setRecords(getAttendanceRecords());
-    setIsAuthOpen(false);
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      setActiveTab('home');
+    } catch (err) {
+      console.error('Failed to log out of Firebase', err);
+    }
   };
 
   const handleResetDemoData = () => {
-    localStorage.removeItem('attendease_attendance_records');
-    localStorage.removeItem('attendease_demo_initialized');
-    if (user) {
-      initializeDemoHistory(user.id, timetable);
-    }
-    setRecords(getAttendanceRecords());
+    if (!user) return;
+    localStorage.removeItem(`attendease_attendance_records_${user.id}`);
+    localStorage.removeItem(`attendease_demo_initialized_${user.id}`);
+    initializeDemoHistory(user.id, timetable);
+    setRecords(getAttendanceRecords(user.id));
   };
 
+  // Auth Loading Spinner
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-canvas flex items-center justify-center flex-col space-y-4">
+        <div className="w-16 h-16 rounded-md bg-primary text-white font-bold flex items-center justify-center text-3xl shadow-md animate-pulse">
+          AE
+        </div>
+        <div className="text-sm font-semibold text-muted">Loading AttendEase...</div>
+      </div>
+    );
+  }
+
+  // Public Landing Page & Auth Gate
+  if (!user) {
+    return (
+      <>
+        <LandingPage
+          onGetStarted={() => setIsAuthOpen(true)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      </>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-canvas text-ink transition-colors duration-200 antialiased selection:bg-brand-pink selection:text-white">
       {/* Top Sticky Header */}
       <Header
         user={user}
@@ -171,7 +231,7 @@ export default function App() {
 
       {/* Main Content Viewport */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {user && activeTab === 'home' && (
+        {activeTab === 'home' && (
           <HomeScreen
             user={user}
             timetable={timetable}
@@ -182,11 +242,11 @@ export default function App() {
           />
         )}
 
-        {user && activeTab === 'dashboard' && (
+        {activeTab === 'dashboard' && (
           <DashboardScreen user={user} timetable={timetable} records={records} />
         )}
 
-        {user && activeTab === 'calendar' && (
+        {activeTab === 'calendar' && (
           <CalendarScreen
             records={records}
             timetable={timetable}
@@ -194,7 +254,7 @@ export default function App() {
           />
         )}
 
-        {user && activeTab === 'history' && (
+        {activeTab === 'history' && (
           <HistoryScreen
             user={user}
             records={records}
@@ -202,7 +262,7 @@ export default function App() {
           />
         )}
 
-        {user && activeTab === 'settings' && (
+        {activeTab === 'settings' && (
           <SettingsScreen
             user={user}
             theme={theme}
@@ -216,8 +276,6 @@ export default function App() {
       </main>
 
       {/* Modals */}
-      <AuthModal isOpen={isAuthOpen} onLoginSuccess={handleLoginSuccess} />
-
       <ProfileSetupModal
         isOpen={isProfileSetupOpen}
         initialData={user}
@@ -233,7 +291,7 @@ export default function App() {
       <PdfExportModal
         isOpen={isPdfExportOpen}
         onClose={() => setIsPdfExportOpen(false)}
-        user={user || defaultUser}
+        user={user}
         timetable={timetable}
         records={records}
       />
@@ -241,7 +299,7 @@ export default function App() {
       <DisputeClaimModal
         isOpen={isDisputeModalOpen}
         onClose={() => setIsDisputeModalOpen(false)}
-        user={user || defaultUser}
+        user={user}
         timetable={timetable}
         records={records}
       />

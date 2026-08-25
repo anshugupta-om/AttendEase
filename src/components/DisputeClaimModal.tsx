@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { AttendanceRecord, Timetable, UserProfile } from '../types';
-import { ShieldAlert, Download, Printer, X, Copy, Check } from 'lucide-react';
+import { ShieldAlert, Download, X, Copy, Check } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -73,19 +73,19 @@ Date: ${todayFormatted}`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto font-bmw">
+      <div className="bg-surface-soft rounded-lg max-w-2xl w-full border border-hairline-strong shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-4 border-b border-hairline">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 bg-canvas border border-hairline-strong text-text-link flex items-center justify-center font-bold rounded-md shadow-sm">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Official Attendance Dispute Application
+              <h3 className="text-lg font-bold text-ink">
+                Dispute Application
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted font-normal">
                 Submit this claim document to your HOD or Attendance Cell
               </p>
             </div>
@@ -94,23 +94,23 @@ Date: ${todayFormatted}`;
           <div className="flex items-center space-x-2">
             <button
               onClick={handleCopyText}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-200 transition-colors"
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-canvas border border-hairline-strong hover:bg-surface-soft hover:border-muted text-ink font-semibold text-xs rounded-md shadow-sm transition-all cursor-pointer"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-green-600" /> : null}
               <span>{copied ? 'Copied' : 'Copy Text'}</span>
             </button>
 
             <button
               onClick={handleDownloadClaimPdf}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 shadow-sm transition-colors"
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-primary hover:bg-primary-active text-white border-0 font-semibold text-xs rounded-md shadow-sm transition-all cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>PDF</span>
+              <span>Download PDF</span>
             </button>
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 text-muted hover:text-ink cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -120,7 +120,7 @@ Date: ${todayFormatted}`;
         {/* Claim Paper Document */}
         <div
           ref={claimRef}
-          className="bg-slate-50 dark:bg-slate-950/60 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-200 space-y-4 whitespace-pre-wrap"
+          className="bg-canvas p-6 border border-hairline-strong font-mono text-[11px] leading-relaxed text-ink space-y-4 whitespace-pre-wrap rounded-md shadow-inner"
         >
           {claimText}
         </div>

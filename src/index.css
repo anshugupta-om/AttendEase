@@ -1,1 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
+
+@theme {
+  --color-white: var(--white);
+  --color-black: var(--black);
+  --color-canvas: var(--canvas);
+  --color-canvas-soft: var(--canvas-soft);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-card: var(--surface-card);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-dark: var(--surface-dark);
+  
+  --color-primary: var(--primary);
+  --color-primary-active: var(--primary-active);
+  --color-ink: var(--ink);
+  --color-body: var(--body-text);
+  --color-body-strong: var(--body-strong);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+  --color-hairline-strong: var(--hairline-strong);
+  
+  --color-text-link: var(--text-link);
+  
+  --font-bmw: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-xxl: 24px;
+}
+
+:root {
+  color-scheme: light;
+  --white: #ffffff;
+  --black: #000000;
+  --canvas: #ffffff;
+  --canvas-soft: #fafafa;
+  --surface-soft: #fafafa;
+  --surface-card: #ffffff;
+  --surface-elevated: #f0f0f3;
+  --surface-dark: #171717;
+  
+  --primary: #000000;
+  --primary-active: #1a1a1a;
+  --ink: #171717;
+  --body-text: #60646c;
+  --body-strong: #171717;
+  --muted: #999999;
+  --muted-soft: #cccccc;
+  --hairline: #f0f0f3;
+  --hairline-soft: #f5f5f7;
+  --hairline-strong: #dcdee0;
+  
+  --text-link: #0d74ce;
+  
+  --success: #16a34a;
+  --warning: #ab6400;
+  --error: #eb8e90;
+}
+
+html.dark {
+  color-scheme: dark;
+  --white: #171717;
+  --black: #ffffff;
+  --canvas: #171717;
+  --canvas-soft: #1a1a1a;
+  --surface-soft: #1a1a1a;
+  --surface-card: #202024;
+  --surface-elevated: #28282c;
+  --surface-dark: #0e0e0e;
+  
+  --primary: #ffffff;
+  --primary-active: #e5e5e5;
+  --ink: #ffffff;
+  --body-text: #b0b4ba;
+  --body-strong: #ffffff;
+  --muted: #888888;
+  --muted-soft: #666666;
+  --hairline: #2e2e33;
+  --hairline-soft: #242428;
+  --hairline-strong: #3e3e44;
+  
+  --text-link: #47c2ff;
+}
+
+/* Enforce Theme Canvas Globally with Inter */
+html {
+  font-size: 18px !important;
+}
+
+body {
+  background-color: var(--canvas) !important;
+  color: var(--ink) !important;
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+}
+
+/* Intercept and scale up small absolute pixel utility classes */
+.text-\[8px\] {
+  font-size: 11px !important;
+}
+.text-\[9px\] {
+  font-size: 12px !important;
+}
+.text-\[10px\] {
+  font-size: 13px !important;
+}
+.text-\[11px\] {
+  font-size: 14.5px !important;
+}
+
+/* Signature AttendEase Stripe divider - Updated to Expo colors */
+.m-stripe {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(
+    to right, 
+    var(--text-link) 0%, 
+    var(--text-link) 50%, 
+    #a8c8e8 100%
+  );
+  border-radius: 9999px;
+}
+
+/* Accent elements and inputs using standard rounded.md (8px) */
+input, select, textarea {
+  border-radius: var(--radius-md) !important;
+  background-color: var(--canvas) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--hairline-strong) !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--text-link) !important;
+  outline: none;
+}
+
+button {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: var(--radius-md);
+}

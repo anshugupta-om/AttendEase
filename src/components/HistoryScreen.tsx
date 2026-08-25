@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AttendanceRecord, UserProfile } from '../types';
-import { Search, Filter, ShieldAlert, FileText, Check, X, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { Search, ShieldAlert, Check, X, Calendar, Clock, AlertCircle } from 'lucide-react';
 
 interface HistoryScreenProps {
   user: UserProfile;
@@ -11,7 +11,6 @@ interface HistoryScreenProps {
 export const HistoryScreen: React.FC<HistoryScreenProps> = ({ user, records, onOpenDisputeModal }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'All' | 'Present' | 'Absent'>('All');
-  const [viewMode, setViewMode] = useState<'Day' | 'Subject'>('Day');
 
   // Filter records
   const filtered = records.filter(r => {
@@ -29,57 +28,60 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ user, records, onO
   const sorted = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <div className="space-y-6 pb-20 md:pb-10">
+    <div className="space-y-6 pb-24 md:pb-12 font-bmw">
+      {/* Clay Design Header Stripe */}
+      <div className="m-stripe" />
+
       {/* Top Claim Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 text-white shadow-lg space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 rounded-full border border-indigo-500/30">
+      <div className="bg-surface-soft p-6 border border-hairline rounded-lg space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <span className="px-2.5 py-0.5 text-[10px] font-bold bg-surface-strong text-ink border border-hairline-strong rounded-full">
               Dispute Resolution Engine
             </span>
-            <h3 className="text-xl font-bold mt-1 text-white">
+            <h3 className="text-xl font-semibold text-ink mt-2">
               Attendance History & Claims
             </h3>
-            <p className="text-xs text-slate-300 max-w-lg mt-0.5">
+            <p className="text-xs text-muted font-normal leading-relaxed max-w-lg">
               Found a mismatch in official college portal attendance? Export verified timestamped proofs to claim your attendance corrections from HOD.
             </p>
           </div>
 
           <button
             onClick={onOpenDisputeModal}
-            className="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-indigo-600/30 transition-all shrink-0 active:scale-95"
+            className="flex items-center justify-center space-x-2 bg-primary text-white px-5 py-3 rounded-md font-semibold text-xs hover:bg-primary-active transition-all shrink-0 cursor-pointer shadow-md border-0"
           >
-            <ShieldAlert className="w-4 h-4 text-indigo-200" />
+            <ShieldAlert className="w-4 h-4 text-text-link" />
             <span>Generate Claim Report</span>
           </button>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-surface-soft p-4 border border-hairline rounded-lg space-y-3 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <Search className="w-4 h-4 text-muted absolute left-3.5 top-3.5" />
             <input
               type="text"
               placeholder="Search by subject code, name or date (e.g. CS301)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-3 bg-canvas border border-hairline-strong rounded-md text-xs text-ink focus:outline-none focus:border-text-link tracking-[0.5px]"
             />
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <div className="flex items-center space-x-1 bg-canvas-soft p-1 border border-hairline-strong rounded-md">
             {(['All', 'Present', 'Absent'] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setSelectedStatus(st)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-4 py-2 text-xs font-semibold tracking-[0.5px] transition-all rounded-sm cursor-pointer ${
                   selectedStatus === st
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+                    ? 'bg-canvas text-ink shadow-sm'
+                    : 'text-muted hover:text-ink'
                 }`}
               >
                 {st}
@@ -89,21 +91,21 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ user, records, onO
         </div>
       </div>
 
-      {/* Logs Table / Card List */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <h4 className="text-base font-bold text-slate-900 dark:text-white">
+      {/* Logs Table */}
+      <div className="bg-surface-soft p-6 border border-hairline rounded-lg space-y-4 shadow-sm">
+        <div className="flex items-center justify-between pb-3 border-b border-hairline">
+          <h4 className="text-base font-bold text-ink">
             Attendance Logs ({sorted.length})
           </h4>
-          <span className="text-xs text-slate-500">
+          <span className="text-[10px] text-muted font-bold uppercase tracking-[0.5px]">
             Sorted by Most Recent
           </span>
         </div>
 
         {sorted.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-xs space-y-2">
-            <AlertCircle className="w-8 h-8 mx-auto text-slate-300" />
-            <p>No matching attendance records found.</p>
+          <div className="text-center py-12 text-muted text-xs font-normal space-y-3">
+            <AlertCircle className="w-8 h-8 mx-auto text-muted animate-pulse" />
+            <p className="tracking-[0.5px]">No matching records found</p>
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -120,35 +122,35 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ user, records, onO
               return (
                 <div
                   key={rec.id}
-                  className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition-colors"
+                  className="flex items-center justify-between p-3.5 border border-hairline bg-canvas rounded-md hover:border-hairline-strong transition-colors shadow-sm"
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-4">
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                      className={`w-9 h-9 flex items-center justify-center font-bold text-xs shrink-0 rounded ${
                         isPresent
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                          ? 'bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400 border border-green-200/50'
+                          : 'bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 border border-red-200/50'
                       }`}
                     >
                       {isPresent ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
                     </div>
 
-                    <div>
+                    <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 rounded">
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-surface-soft text-ink border border-hairline-strong rounded font-mono">
                           {rec.subjectCode}
                         </span>
-                        <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[180px] sm:max-w-xs">
+                        <h5 className="text-xs font-semibold text-ink truncate max-w-[180px] sm:max-w-xs">
                           {rec.subjectName}
                         </h5>
                       </div>
-                      <div className="flex items-center space-x-3 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        <span className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3 text-slate-400" />
+                      <div className="flex items-center space-x-4 text-[10px] text-muted font-normal tracking-[0.5px]">
+                        <span className="flex items-center space-x-1.5 font-mono">
+                          <Calendar className="w-3 h-3 text-text-link" />
                           <span>{formattedDate}</span>
                         </span>
-                        <span className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3 text-slate-400" />
+                        <span className="flex items-center space-x-1.5 font-mono">
+                          <Clock className="w-3 h-3 text-muted" />
                           <span>{new Date(rec.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </span>
                       </div>
@@ -157,10 +159,10 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ user, records, onO
 
                   <div className="text-right">
                     <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-bold inline-block ${
+                      className={`px-3 py-1 text-[10px] font-bold rounded-full inline-block border ${
                         isPresent
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                          ? 'bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400 border-green-200/50'
+                          : 'bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 border-red-200/50'
                       }`}
                     >
                       {rec.status}

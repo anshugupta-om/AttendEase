@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Timetable } from '../types';
 import { SAMPLE_TIMETABLES } from '../data/sampleTimetables';
-import { Upload, FileText, Sparkles, Check, AlertCircle, X, Loader2, ArrowRight } from 'lucide-react';
+import { Upload, Sparkles, Check, AlertCircle, X, Loader2 } from 'lucide-react';
 
 interface TimetableUploadModalProps {
   isOpen: boolean;
@@ -98,27 +98,27 @@ export const TimetableUploadModal: React.FC<TimetableUploadModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 font-bmw">
+      <div className="bg-surface-soft rounded-lg max-w-xl w-full border border-hairline-strong shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-4 border-b border-hairline">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 bg-canvas border border-hairline-strong text-text-link flex items-center justify-center font-bold rounded-md shadow-sm">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-bold text-ink">
                 Upload Class Timetable PDF
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Automatic OCR & AI layout parser
+              <p className="text-xs text-muted font-normal">
+                Automatic OCR & AI layout structural parser
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 text-muted hover:text-ink cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -127,26 +127,26 @@ export const TimetableUploadModal: React.FC<TimetableUploadModalProps> = ({
         {/* Upload Dropzone */}
         {!parsedPreview && (
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-3xl p-8 text-center bg-slate-50/50 dark:bg-slate-800/30 transition-colors cursor-pointer relative">
+            <div className="border-2 border-dashed border-hairline-strong hover:border-muted rounded-lg p-8 text-center bg-canvas transition-colors cursor-pointer relative shadow-inner">
               <input
                 type="file"
                 accept=".pdf,image/*"
                 onChange={handleFileChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-canvas border border-hairline-strong text-text-link flex items-center justify-center mx-auto mb-3 rounded-md shadow-sm">
                 <Upload className="w-6 h-6" />
               </div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+              <h4 className="text-sm font-semibold text-ink">
                 {file ? file.name : 'Choose or drop your Timetable PDF / Image'}
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
+              <p className="text-xs text-muted max-w-xs mx-auto mt-1.5 font-normal leading-relaxed">
                 Supports official college timetable PDFs with lecture timings, rooms, faculty, and lab batches.
               </p>
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 text-xs flex items-center space-x-2">
+              <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-md border border-red-200/50 tracking-[0.5px] flex items-center space-x-2 shadow-sm">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
@@ -154,8 +154,8 @@ export const TimetableUploadModal: React.FC<TimetableUploadModalProps> = ({
 
             {isUploading ? (
               <div className="py-6 text-center space-y-3">
-                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <Loader2 className="w-8 h-8 text-text-link animate-spin mx-auto" />
+                <p className="text-xs font-semibold text-ink tracking-[0.5px]">
                   {uploadStatusText}
                 </p>
               </div>
@@ -163,7 +163,7 @@ export const TimetableUploadModal: React.FC<TimetableUploadModalProps> = ({
               <button
                 onClick={handleParsePdf}
                 disabled={!file}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs rounded-2xl shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2"
+                className="w-full py-3.5 bg-primary hover:bg-primary-active text-white disabled:opacity-50 font-semibold text-xs tracking-[0.5px] rounded-md transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md border-0"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Extract Timetable with Gemini AI</span>
@@ -171,31 +171,31 @@ export const TimetableUploadModal: React.FC<TimetableUploadModalProps> = ({
             )}
 
             {/* Quick Sample Timetable Buttons */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                Or Use Official Pre-Built Timetables
+            <div className="pt-4 border-t border-hairline space-y-2">
+              <span className="text-[10px] font-bold text-muted uppercase tracking-[0.5px] block font-mono">
+                Or Use Official Pre-Built Templates
               </span>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleApplySample('AIML-3-A')}
-                  className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 bg-white dark:bg-slate-800 text-left text-xs space-y-1 transition-all"
+                  className="p-4 border border-hairline-strong hover:border-muted bg-canvas text-left text-xs space-y-1.5 rounded-md cursor-pointer shadow-sm"
                 >
-                  <span className="font-bold text-slate-900 dark:text-white block">
+                  <span className="font-bold text-ink tracking-tight block">
                     AIML - Sem 3 (Sec A)
                   </span>
-                  <span className="text-[10px] text-slate-500 block">
+                  <span className="text-[10px] text-muted font-normal block font-mono">
                     AI, DSA, DBMS, Maths, Labs
                   </span>
                 </button>
 
                 <button
                   onClick={() => handleApplySample('DS-3-A')}
-                  className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 bg-white dark:bg-slate-800 text-left text-xs space-y-1 transition-all"
+                  className="p-4 border border-hairline-strong hover:border-muted bg-canvas text-left text-xs space-y-1.5 rounded-md cursor-pointer shadow-sm"
                 >
-                  <span className="font-bold text-slate-900 dark:text-white block">
+                  <span className="font-bold text-ink tracking-tight block">
                     Data Science - Sem 3 (Sec A)
                   </span>
-                  <span className="text-[10px] text-slate-500 block">
+                  <span className="text-[10px] text-muted font-normal block font-mono">
                     Data Viz, Stats, DBMS, Labs
                   </span>
                 </button>
@@ -207,35 +207,35 @@ export const TimetableUploadModal: React.FC<TimetableUploadModalProps> = ({
         {/* Parsed Preview Confirmation */}
         {parsedPreview && (
           <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center space-x-2">
-              <Check className="w-5 h-5 text-emerald-600 shrink-0" />
-              <div>
-                <strong>Successfully extracted timetable!</strong>
-                <p className="text-[11px] opacity-90">
+            <div className="p-4 bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs rounded-md border border-green-200/50 flex items-center space-x-2 shadow-sm">
+              <Check className="w-5 h-5 shrink-0 text-green-600 dark:text-green-400" />
+              <div className="tracking-[0.5px] space-y-0.5">
+                <strong className="font-semibold">Successfully extracted timetable!</strong>
+                <p className="text-[10px] font-normal opacity-90 font-mono">
                   {parsedPreview.branch} • Year {parsedPreview.year} • Semester {parsedPreview.semester} • Section {parsedPreview.section}
                 </p>
               </div>
             </div>
 
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              <span className="text-[10px] font-bold text-ink tracking-[0.5px] block font-mono">
                 Monday Preview ({parsedPreview.weeklySchedule.Monday?.length || 0} slots):
               </span>
               {parsedPreview.weeklySchedule.Monday?.map((slot, i) => (
                 <div
                   key={i}
-                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 text-xs flex items-center justify-between"
+                  className="p-3 bg-canvas border border-hairline-strong text-xs flex items-center justify-between rounded-md shadow-sm"
                 >
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white">
+                    <span className="font-bold text-ink">
                       {slot.subjectCode}: {slot.subjectName}
                     </span>
-                    <span className="block text-[11px] text-slate-500">
+                    <span className="block text-[10px] text-muted font-normal mt-0.5 font-mono">
                       {slot.startTime} - {slot.endTime} • {slot.facultyName} • {slot.roomNumber}
                     </span>
                   </div>
                   {slot.isLab && (
-                    <span className="px-2 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-800 rounded">
+                    <span className="px-2.5 py-0.5 text-[10px] font-bold bg-surface-strong text-ink border border-hairline-strong rounded-full">
                       LAB
                     </span>
                   )}
@@ -243,18 +243,18 @@ export const TimetableUploadModal: React.FC<TimetableUploadModalProps> = ({
               ))}
             </div>
 
-            <div className="flex items-center space-x-2 pt-2">
+            <div className="flex items-center space-x-3 pt-2">
               <button
                 onClick={() => setParsedPreview(null)}
-                className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl"
+                className="flex-1 py-3 border border-hairline-strong text-ink font-semibold text-xs rounded-md hover:bg-surface-soft hover:border-muted transition-colors cursor-pointer bg-canvas shadow-sm"
               >
                 Back
               </button>
               <button
                 onClick={handleConfirmTimetable}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20"
+                className="flex-1 py-3 bg-primary hover:bg-primary-active text-white border-0 font-semibold text-xs rounded-md transition-colors cursor-pointer shadow-md"
               >
-                Confirm & Set Timetable
+                Confirm & Load
               </button>
             </div>
           </div>

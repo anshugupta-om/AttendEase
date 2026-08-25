@@ -6,6 +6,7 @@ export type AttendanceStatus = 'Present' | 'Absent' | 'Cancelled' | 'Holiday';
 
 export interface UserProfile {
   id: string;
+  firebaseUid?: string;
   name: string;
   email: string;
   branch: Branch;

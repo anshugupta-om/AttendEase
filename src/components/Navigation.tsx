@@ -19,10 +19,10 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onChangeTab }
 
   return (
     <>
-      {/* Desktop Navigation Tabs (Inline under header) */}
-      <div className="hidden md:block bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-1 py-2">
+      {/* Desktop Navigation Tabs */}
+      <div className="hidden md:block bg-canvas border-b border-hairline">
+        <div className="max-w-7xl mx-auto px-8">
+          <nav className="flex space-x-8">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -30,14 +30,19 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onChangeTab }
                 <button
                   key={tab.id}
                   onClick={() => onChangeTab(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`relative py-4 px-1 text-xs font-semibold tracking-[0.5px] transition-all duration-150 cursor-pointer ${
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800'
+                      ? 'text-ink font-bold'
+                      : 'text-muted hover:text-ink'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
+                  <span className="flex items-center space-x-2">
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
+                  </span>
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-primary rounded-t-full" />
+                  )}
                 </button>
               );
             })}
@@ -45,8 +50,8 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onChangeTab }
         </div>
       </div>
 
-      {/* Mobile Floating Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 shadow-lg">
+      {/* Mobile Bottom Navigation Bar (engineered rounded style) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-canvas/90 backdrop-blur-md border-t border-hairline py-2 shadow-lg">
         <div className="flex items-center justify-around max-w-md mx-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -55,20 +60,17 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onChangeTab }
               <button
                 key={tab.id}
                 onClick={() => onChangeTab(tab.id)}
-                className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all ${
+                className={`relative flex flex-col items-center justify-center py-1.5 px-3 transition-all duration-150 cursor-pointer rounded-md ${
                   isActive
-                    ? 'text-indigo-600 dark:text-indigo-400 font-semibold'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'text-ink font-semibold'
+                    : 'text-muted hover:text-ink'
                 }`}
               >
-                <div
-                  className={`p-1 rounded-lg transition-transform ${
-                    isActive ? 'bg-indigo-50 dark:bg-indigo-950/80 scale-110' : ''
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] mt-0.5 tracking-tight">{tab.label}</span>
+                <Icon className="w-4 h-4" />
+                <span className="text-[9px] mt-1 font-bold tracking-[0.5px]">{tab.label}</span>
+                {isActive && (
+                  <div className="absolute top-0 left-3 right-3 h-[2px] bg-primary rounded-full" />
+                )}
               </button>
             );
           })}

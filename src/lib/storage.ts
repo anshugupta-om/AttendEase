@@ -24,9 +24,10 @@ export const defaultUser: UserProfile = {
   themePreference: 'light'
 };
 
-export function getUserProfile(): UserProfile | null {
+export function getUserProfile(userId?: string): UserProfile | null {
   try {
-    const data = localStorage.getItem(KEYS.USER_PROFILE);
+    const key = userId ? `${KEYS.USER_PROFILE}_${userId}` : KEYS.USER_PROFILE;
+    const data = localStorage.getItem(key);
     if (!data) return null;
     return JSON.parse(data);
   } catch (err) {
@@ -36,12 +37,15 @@ export function getUserProfile(): UserProfile | null {
 }
 
 export function saveUserProfile(profile: UserProfile): void {
+  // Store both as the active session profile and user-specific partitioned profile
   localStorage.setItem(KEYS.USER_PROFILE, JSON.stringify(profile));
+  localStorage.setItem(`${KEYS.USER_PROFILE}_${profile.id}`, JSON.stringify(profile));
 }
 
-export function getTimetable(): Timetable {
+export function getTimetable(userId?: string): Timetable {
   try {
-    const data = localStorage.getItem(KEYS.TIMETABLE);
+    const key = userId ? `${KEYS.TIMETABLE}_${userId}` : KEYS.TIMETABLE;
+    const data = localStorage.getItem(key);
     if (data) {
       return JSON.parse(data);
     }
@@ -52,13 +56,15 @@ export function getTimetable(): Timetable {
   return SAMPLE_TIMETABLES['AIML-3-A'];
 }
 
-export function saveTimetable(timetable: Timetable): void {
-  localStorage.setItem(KEYS.TIMETABLE, JSON.stringify(timetable));
+export function saveTimetable(timetable: Timetable, userId?: string): void {
+  const key = userId ? `${KEYS.TIMETABLE}_${userId}` : KEYS.TIMETABLE;
+  localStorage.setItem(key, JSON.stringify(timetable));
 }
 
-export function getAttendanceRecords(): AttendanceRecord[] {
+export function getAttendanceRecords(userId?: string): AttendanceRecord[] {
   try {
-    const data = localStorage.getItem(KEYS.ATTENDANCE_RECORDS);
+    const key = userId ? `${KEYS.ATTENDANCE_RECORDS}_${userId}` : KEYS.ATTENDANCE_RECORDS;
+    const data = localStorage.getItem(key);
     if (data) {
       return JSON.parse(data);
     }
@@ -68,8 +74,9 @@ export function getAttendanceRecords(): AttendanceRecord[] {
   return [];
 }
 
-export function saveAttendanceRecords(records: AttendanceRecord[]): void {
-  localStorage.setItem(KEYS.ATTENDANCE_RECORDS, JSON.stringify(records));
+export function saveAttendanceRecords(records: AttendanceRecord[], userId?: string): void {
+  const key = userId ? `${KEYS.ATTENDANCE_RECORDS}_${userId}` : KEYS.ATTENDANCE_RECORDS;
+  localStorage.setItem(key, JSON.stringify(records));
 }
 
 export function recordAttendance(
@@ -81,13 +88,13 @@ export function recordAttendance(
   status: AttendanceStatus,
   note?: string
 ): AttendanceRecord {
-  const records = getAttendanceRecords();
+  const records = getAttendanceRecords(userId);
   const existingIdx = records.findIndex(
     r => r.date === dateStr && (r.lectureId === lectureId || (r.subjectCode === subjectCode && r.timestamp.startsWith(dateStr)))
   );
 
   const newRecord: AttendanceRecord = {
-    id: existingIdx >= 0 ? records[existingIdx].id : `att_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    id: existingIdx >= 0 ? records[existingIdx].id : `att_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     userId,
     date: dateStr,
     lectureId,
@@ -104,7 +111,7 @@ export function recordAttendance(
     records.push(newRecord);
   }
 
-  saveAttendanceRecords(records);
+  saveAttendanceRecords(records, userId);
   return newRecord;
 }
 
@@ -129,7 +136,8 @@ export function markTodayAllPresent(userId: string, timetable: Timetable, todayD
 
 // Generate rich realistic past attendance records for demo/testing
 export function initializeDemoHistory(userId: string, timetable: Timetable) {
-  if (localStorage.getItem(KEYS.DEMO_INITIALIZED)) return;
+  const initializedKey = `${KEYS.DEMO_INITIALIZED}_${userId}`;
+  if (localStorage.getItem(initializedKey)) return;
 
   const records: AttendanceRecord[] = [];
   const daysMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -169,13 +177,29 @@ export function initializeDemoHistory(userId: string, timetable: Timetable) {
     });
   }
 
-  saveAttendanceRecords(records);
-  localStorage.setItem(KEYS.DEMO_INITIALIZED, 'true');
+  saveAttendanceRecords(records, userId);
+  localStorage.setItem(initializedKey, 'true');
 }
 
-export function clearAllData(): void {
-  localStorage.removeItem(KEYS.USER_PROFILE);
-  localStorage.removeItem(KEYS.TIMETABLE);
-  localStorage.removeItem(KEYS.ATTENDANCE_RECORDS);
-  localStorage.removeItem(KEYS.DEMO_INITIALIZED);
+export function clearAllData(userId?: string): void {
+  if (userId) {
+    localStorage.removeItem(`${KEYS.USER_PROFILE}_${userId}`);
+    localStorage.removeItem(`${KEYS.TIMETABLE}_${userId}`);
+    localStorage.removeItem(`${KEYS.ATTENDANCE_RECORDS}_${userId}`);
+    localStorage.removeItem(`${KEYS.DEMO_INITIALIZED}_${userId}`);
+    // Also clear generic values if they belong to this user
+    try {
+      const active = getUserProfile();
+      if (active && active.id === userId) {
+        localStorage.removeItem(KEYS.USER_PROFILE);
+        localStorage.removeItem(KEYS.TIMETABLE);
+        localStorage.removeItem(KEYS.ATTENDANCE_RECORDS);
+      }
+    } catch (_) {}
+  } else {
+    localStorage.removeItem(KEYS.USER_PROFILE);
+    localStorage.removeItem(KEYS.TIMETABLE);
+    localStorage.removeItem(KEYS.ATTENDANCE_RECORDS);
+    localStorage.removeItem(KEYS.DEMO_INITIALIZED);
+  }
 }
