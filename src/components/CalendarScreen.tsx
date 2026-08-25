@@ -201,7 +201,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({
           ) : (
             <div className="space-y-3">
               {selectedDaySlots.map((slot) => {
-                const rec = records.find(r => r.date === selectedDayDate && (r.lectureId === slot.id || r.subjectCode === slot.subjectCode));
+                const rec = records.find(r => r.date === selectedDayDate && r.lectureId === slot.id);
                 const currentStatus = rec?.status;
 
                 return (

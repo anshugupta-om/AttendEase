@@ -42,23 +42,46 @@ export function saveUserProfile(profile: UserProfile): void {
   localStorage.setItem(`${KEYS.USER_PROFILE}_${profile.id}`, JSON.stringify(profile));
 }
 
+export function sanitizeTimetable(timetable: Timetable): Timetable {
+  if (!timetable || !timetable.weeklySchedule) return timetable;
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+  const weeklySchedule = { ...timetable.weeklySchedule };
+  
+  for (const day of days) {
+    if (Array.isArray(weeklySchedule[day])) {
+      weeklySchedule[day] = weeklySchedule[day].map((slot, index) => {
+        if (!slot.id) {
+          const prefix = day.toLowerCase().substring(0, 3);
+          const num = slot.lectureNumber || (index + 1);
+          return {
+            ...slot,
+            id: `slot_${prefix}_${num}`
+          };
+        }
+        return slot;
+      });
+    }
+  }
+  return { ...timetable, weeklySchedule };
+}
+
 export function getTimetable(userId?: string): Timetable {
   try {
     const key = userId ? `${KEYS.TIMETABLE}_${userId}` : KEYS.TIMETABLE;
     const data = localStorage.getItem(key);
     if (data) {
-      return JSON.parse(data);
+      return sanitizeTimetable(JSON.parse(data));
     }
   } catch (err) {
     console.error('Failed to get stored timetable', err);
   }
   // Return default sample timetable for AIML-3-A
-  return SAMPLE_TIMETABLES['AIML-3-A'];
+  return sanitizeTimetable(SAMPLE_TIMETABLES['AIML-3-A']);
 }
 
 export function saveTimetable(timetable: Timetable, userId?: string): void {
   const key = userId ? `${KEYS.TIMETABLE}_${userId}` : KEYS.TIMETABLE;
-  localStorage.setItem(key, JSON.stringify(timetable));
+  localStorage.setItem(key, JSON.stringify(sanitizeTimetable(timetable)));
 }
 
 export function getAttendanceRecords(userId?: string): AttendanceRecord[] {
@@ -90,7 +113,7 @@ export function recordAttendance(
 ): AttendanceRecord {
   const records = getAttendanceRecords(userId);
   const existingIdx = records.findIndex(
-    r => r.date === dateStr && (r.lectureId === lectureId || (r.subjectCode === subjectCode && r.timestamp.startsWith(dateStr)))
+    r => r.date === dateStr && r.lectureId === lectureId
   );
 
   const newRecord: AttendanceRecord = {

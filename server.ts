@@ -99,12 +99,12 @@ Return:
               weeklySchedule: {
                 type: Type.OBJECT,
                 properties: {
-                  Monday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
-                  Tuesday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
-                  Wednesday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
-                  Thursday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
-                  Friday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
-                  Saturday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } }
+                  Monday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { id: { type: Type.STRING }, lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
+                  Tuesday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { id: { type: Type.STRING }, lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
+                  Wednesday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { id: { type: Type.STRING }, lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
+                  Thursday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { id: { type: Type.STRING }, lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
+                  Friday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { id: { type: Type.STRING }, lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } },
+                  Saturday: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { id: { type: Type.STRING }, lectureNumber: { type: Type.INTEGER }, subjectCode: { type: Type.STRING }, subjectName: { type: Type.STRING }, facultyName: { type: Type.STRING }, roomNumber: { type: Type.STRING }, startTime: { type: Type.STRING }, endTime: { type: Type.STRING }, isLab: { type: Type.BOOLEAN }, batchSection: { type: Type.STRING }, dayOfWeek: { type: Type.STRING } } } }
                 }
               }
             }
@@ -114,6 +114,21 @@ Return:
 
       const responseText = response.text || '';
       const parsedData = JSON.parse(responseText);
+
+      const weeklySchedule = parsedData.weeklySchedule || {};
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      for (const day of days) {
+        if (Array.isArray(weeklySchedule[day])) {
+          weeklySchedule[day] = weeklySchedule[day].map((slot: any, idx: number) => {
+            const prefix = day.toLowerCase().substring(0, 3);
+            const num = slot.lectureNumber || (idx + 1);
+            return {
+              ...slot,
+              id: slot.id || `ai_${prefix}_${num}`
+            };
+          });
+        }
+      }
 
       res.json({
         success: true,
@@ -127,7 +142,7 @@ Return:
           roomNumber: parsedData.roomNumber || 'LH-302',
           uploadedFileName: fileName || 'Uploaded_Timetable.pdf',
           updatedAt: new Date().toISOString(),
-          weeklySchedule: parsedData.weeklySchedule
+          weeklySchedule
         }
       });
 
