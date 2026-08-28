@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Branch, UserProfile, Year } from '../types';
+import { Branch, UserProfile, Year, SECTIONS, Section } from '../types';
 import { User, Building, ArrowRight } from 'lucide-react';
 
 interface ProfileSetupModalProps {
@@ -18,7 +18,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
   const [branch, setBranch] = useState<Branch>(initialData?.branch || 'AIML');
   const [year, setYear] = useState<Year>(initialData?.year || 'Second Year');
   const [semester, setSemester] = useState<number>(initialData?.semester || 3);
-  const [section, setSection] = useState<string>(initialData?.section || 'A');
+  const [section, setSection] = useState<Section>((initialData?.section as Section) || 'A');
   const [batch, setBatch] = useState<string>(initialData?.batch || 'C1');
   const [collegeName, setCollegeName] = useState(initialData?.collegeName || 'National Institute of Technology');
 
@@ -148,15 +148,15 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
               <label className="block text-[10px] font-bold tracking-[1px] uppercase text-muted mb-1 font-mono">
                 Section
               </label>
-              <input
-                type="text"
-                required
+              <select
                 value={section}
-                onChange={(e) => setSection(e.target.value.toUpperCase())}
-                autoComplete="off"
-                placeholder="A, B, or C"
+                onChange={(e) => setSection(e.target.value as Section)}
                 className="w-full px-3 py-2.5 bg-canvas border border-hairline-strong rounded-md text-xs text-ink focus:outline-none focus:border-text-link tracking-[0.5px]"
-              />
+              >
+                {SECTIONS.map((s) => (
+                  <option key={s} value={s} className="bg-surface-card text-ink">SECTION {s}</option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -166,7 +166,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
               <input
                 type="text"
                 value={batch}
-                onChange={(e) => setSection(e.target.value.toUpperCase())}
+                onChange={(e) => setBatch(e.target.value.toUpperCase())}
                 autoComplete="off"
                 placeholder="C1, C2"
                 className="w-full px-3 py-2.5 bg-canvas border border-hairline-strong rounded-md text-xs text-ink focus:outline-none focus:border-text-link tracking-[0.5px]"

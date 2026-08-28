@@ -1,25 +1,31 @@
 import React from 'react';
-import { UserProfile } from '../types';
-import { Sparkles, Moon, Sun, LogOut, RefreshCw, Smartphone, ShieldAlert } from 'lucide-react';
+import { UserProfile, Timetable, UserTimetableOverrides } from '../types';
+import { Sparkles, Moon, Sun, LogOut, RefreshCw, Smartphone, ShieldAlert, ArchiveRestore } from 'lucide-react';
 
 interface SettingsScreenProps {
   user: UserProfile;
   theme: 'light' | 'dark';
+  timetable: Timetable;
+  overrides: UserTimetableOverrides | null;
   onToggleTheme: () => void;
   onOpenEditProfile: () => void;
   onOpenUploadTimetable: () => void;
   onResetData: () => void;
   onLogout: () => void;
+  onRestoreLecture: (lectureId: string) => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   user,
   theme,
+  timetable,
+  overrides,
   onToggleTheme,
   onOpenEditProfile,
   onOpenUploadTimetable,
   onResetData,
   onLogout,
+  onRestoreLecture,
 }) => {
   return (
     <div className="space-y-6 pb-24 md:pb-12 max-w-3xl mx-auto font-bmw">
@@ -95,6 +101,52 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             }`} />
           </div>
         </div>
+
+        {/* Restore Hidden Lectures Section */}
+        {overrides?.removedLectureIds && Object.keys(overrides.removedLectureIds).length > 0 && (
+          <div className="bg-surface-card border border-hairline-strong rounded-lg overflow-hidden shadow-sm">
+            <div className="px-6 py-5 border-b border-hairline-strong">
+              <h3 className="text-sm font-bold text-ink tracking-tight flex items-center space-x-2">
+                <ArchiveRestore className="w-4 h-4 text-primary" />
+                <span>Hidden Lectures</span>
+              </h3>
+              <p className="text-xs text-muted mt-1">Lectures you have removed from your daily view.</p>
+            </div>
+            
+            <div className="divide-y divide-hairline">
+              {Object.keys(overrides.removedLectureIds).map(lectureId => {
+                // Find the original lecture details from the timetable
+                let originalSlot = null;
+                for (const day of ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const) {
+                  const slot = timetable.weeklySchedule[day]?.find(s => s.id === lectureId);
+                  if (slot) {
+                    originalSlot = { ...slot, day };
+                    break;
+                  }
+                }
+
+                if (!originalSlot) return null;
+
+                return (
+                  <div key={lectureId} className="px-6 py-4 flex items-center justify-between hover:bg-canvas-soft transition-colors">
+                    <div>
+                      <div className="text-sm font-semibold text-ink">{originalSlot.subjectName} ({originalSlot.subjectCode})</div>
+                      <div className="text-xs text-muted mt-0.5">
+                        {originalSlot.day} • {originalSlot.startTime} - {originalSlot.endTime} • {originalSlot.facultyName}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onRestoreLecture(lectureId)}
+                      className="px-4 py-2 bg-canvas border border-hairline-strong hover:border-text-link hover:text-text-link text-ink text-xs font-semibold rounded-md shadow-sm cursor-pointer transition-colors"
+                    >
+                      Restore
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Timetable Re-upload */}
         <div

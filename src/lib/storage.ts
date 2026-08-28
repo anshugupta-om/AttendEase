@@ -1,4 +1,4 @@
-import { AttendanceRecord, AttendanceStatus, Timetable, UserProfile } from '../types';
+import { AttendanceRecord, AttendanceStatus, Timetable, UserProfile, UserTimetableOverrides } from '../types';
 import { SAMPLE_TIMETABLES } from '../data/sampleTimetables';
 
 const KEYS = {
@@ -225,4 +225,68 @@ export function clearAllData(userId?: string): void {
     localStorage.removeItem(KEYS.ATTENDANCE_RECORDS);
     localStorage.removeItem(KEYS.DEMO_INITIALIZED);
   }
+}
+
+// Pure merge function: applies per-lecture overrides onto a timetable without mutating the original
+export function applyOverridesToTimetable(
+  timetable: Timetable,
+  overrides: UserTimetableOverrides | null
+): Timetable {
+  if (!overrides) {
+    return timetable;
+  }
+
+  const hasOverrides = overrides.overrides && Object.keys(overrides.overrides).length > 0;
+  const hasAdded = overrides.addedLectures && Object.keys(overrides.addedLectures).length > 0;
+  const hasRemoved = overrides.removedLectureIds && Object.keys(overrides.removedLectureIds).length > 0;
+
+  if (!hasOverrides && !hasAdded && !hasRemoved) {
+    return timetable;
+  }
+
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+  const newSchedule = { ...timetable.weeklySchedule };
+
+  for (const day of days) {
+    if (Array.isArray(newSchedule[day])) {
+      // 1. Filter out removed lectures and apply edits
+      let daySlots = newSchedule[day]
+        .filter(slot => !(overrides.removedLectureIds && overrides.removedLectureIds[slot.id]))
+        .map(slot => {
+          const override = overrides.overrides?.[slot.id];
+          if (!override) return slot;
+
+          return {
+            ...slot,
+            subjectName: override.subjectName ?? slot.subjectName,
+            subjectCode: override.subjectCode ?? slot.subjectCode,
+            facultyName: override.facultyName ?? slot.facultyName,
+            startTime: override.startTime ?? slot.startTime,
+            endTime: override.endTime ?? slot.endTime,
+            roomNumber: override.roomNumber ?? slot.roomNumber,
+            isLab: override.isLab ?? slot.isLab,
+            batchSection: override.batchSection ?? slot.batchSection,
+          };
+        });
+
+      // 2. Add user-added lectures for this day
+      if (overrides.addedLectures) {
+        const addedForDay = Object.values(overrides.addedLectures).filter(
+          added => added.dayOfWeek === day
+        );
+        
+        // We append them. We generate a fake lectureNumber for UI purposes.
+        addedForDay.forEach((addedSlot, idx) => {
+          daySlots.push({
+            ...addedSlot,
+            lectureNumber: daySlots.length + 1
+          });
+        });
+      }
+
+      newSchedule[day] = daySlots;
+    }
+  }
+
+  return { ...timetable, weeklySchedule: newSchedule };
 }

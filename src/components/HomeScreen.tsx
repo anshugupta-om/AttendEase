@@ -1,25 +1,38 @@
 import React, { useState } from 'react';
-import { AttendanceRecord, AttendanceStatus, LectureSlot, Timetable, UserProfile } from '../types';
-import { Check, X, Clock, MapPin, User, Sparkles, CheckCheck, Calendar as CalendarIcon } from 'lucide-react';
+import { AttendanceRecord, AttendanceStatus, LectureSlot, LectureOverride, Timetable, UserProfile, UserTimetableOverrides } from '../types';
+import { Check, X, Clock, MapPin, User, Sparkles, CheckCheck, Calendar as CalendarIcon, Pencil, PenLine, Trash2, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { LectureEditModal } from './LectureEditModal';
 
 interface HomeScreenProps {
   user: UserProfile;
   timetable: Timetable;
   records: AttendanceRecord[];
+  overrides: UserTimetableOverrides | null;
   onMarkAttendance: (lectureId: string, subjectCode: string, subjectName: string, status: AttendanceStatus) => void;
   onPresentAll: () => void;
   onOpenUploadTimetable: () => void;
+  onEditLecture: (lectureId: string, dayOfWeek: string, override: LectureOverride) => void;
+  onRevertLecture: (lectureId: string) => void;
+  onAddLecture: (lectureId: string, dayOfWeek: string, newLecture: any) => void;
+  onRemoveLecture: (lectureId: string, isUserAdded: boolean) => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   user,
   timetable,
   records,
+  overrides,
   onMarkAttendance,
   onPresentAll,
   onOpenUploadTimetable,
+  onEditLecture,
+  onRevertLecture,
+  onAddLecture,
+  onRemoveLecture,
 }) => {
+  const [editingSlot, setEditingSlot] = useState<{ slot: LectureSlot; dayOfWeek: string } | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
 
   // Get current day of week
@@ -47,6 +60,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       origin: { y: 0.85 },
       colors: ['#0066b1', '#1c69d4', '#e22718']
     });
+  };
+
+  const handleReportTemplate = async () => {
+    const confirmReport = window.confirm(
+      "Is this shared timetable incorrect? Flagging it will report it to the class template database and allow you to upload a new one."
+    );
+    if (!confirmReport) return;
+
+    try {
+      const response = await fetch('/api/report-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branch: user.branch,
+          year: user.year,
+          semester: user.semester,
+          section: user.section
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert("Timetable template reported. Let's upload a correct one!");
+        onOpenUploadTimetable();
+      } else {
+        alert("Failed to report template. Opening upload options.");
+        onOpenUploadTimetable();
+      }
+    } catch (err) {
+      console.error("Failed to report template:", err);
+      onOpenUploadTimetable();
+    }
   };
 
   // Helper to find record status for a given slot on today
@@ -140,6 +184,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </h3>
           <p className="text-xs text-muted font-normal">
             {slots.length} scheduled lectures configured
+            {timetable.isSharedTemplate && (
+              <span className="block mt-1 text-[11px] text-muted">
+                Shared Template &bull;{' '}
+                <button
+                  onClick={handleReportTemplate}
+                  className="text-red-500 hover:text-red-600 font-semibold cursor-pointer underline hover:no-underline bg-transparent border-0 p-0"
+                >
+                  Report Incorrect Timetable
+                </button>
+              </span>
+            )}
           </p>
         </div>
 
@@ -203,12 +258,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     <span className="px-2 py-0.5 text-[11px] font-bold bg-canvas-soft text-ink border border-hairline-strong rounded font-mono">
                       {slot.subjectCode}
                     </span>
-                    {slot.isLab && (
+                  {slot.isLab && (
                       <span className="px-2 py-0.5 text-[10px] font-semibold bg-surface-strong text-muted border border-hairline-strong rounded-full">
                         LAB {slot.batchSection ? `• ${slot.batchSection}` : ''}
                       </span>
                     )}
+                    {overrides?.overrides?.[slot.id] && (
+                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-700/50 rounded-full flex items-center space-x-1">
+                        <PenLine className="w-2.5 h-2.5" />
+                        <span>Edited</span>
+                      </span>
+                    )}
                   </div>
+
+                  <div className="flex items-center space-x-1.5">
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => setEditingSlot({ slot, dayOfWeek: selectedDay })}
+                      className="p-1.5 text-muted hover:text-text-link hover:bg-surface-soft rounded-md transition-all cursor-pointer border border-transparent hover:border-hairline-strong"
+                      title="Edit this lecture (personal override)"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => {
+                        const hasHistory = records.some(r => r.lectureId === slot.id);
+                        const msg = hasHistory 
+                          ? "This lecture has past attendance records. If you delete it, it will be hidden from your schedule going forward, but past records will be kept for analytics. Continue?"
+                          : "Remove this lecture from your schedule? This won't affect other students.";
+                        if (window.confirm(msg)) {
+                          onRemoveLecture(slot.id, (slot as any).origin === 'user-added');
+                        }
+                      }}
+                      className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md transition-all cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900"
+                      title="Remove this lecture"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
 
                   {/* Status Indicator Badge */}
                   {isToday && currentStatus && (
@@ -223,6 +311,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       <span>{currentStatus}</span>
                     </span>
                   )}
+                  </div>
                 </div>
 
                 {/* Subject Name */}
@@ -285,6 +374,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </div>
             );
           })}
+          {/* Add Lecture Card Button */}
+          <button
+            onClick={() => setIsAddingNew(true)}
+            className="bg-canvas-soft border-2 border-dashed border-hairline-strong hover:border-text-link hover:bg-surface-soft p-5 transition-all duration-150 rounded-lg flex flex-col items-center justify-center text-muted hover:text-text-link min-h-[220px] cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-full bg-surface-strong flex items-center justify-center mb-3">
+              <Plus className="w-5 h-5" />
+            </div>
+            <span className="font-semibold tracking-tight text-sm">Add Lecture</span>
+            <span className="text-xs mt-1 text-center font-normal px-4">
+              Add a personal elective or extra class to {selectedDay}
+            </span>
+          </button>
         </div>
       )}
 
@@ -299,6 +401,39 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <span>Present All</span>
           </button>
         </div>
+      )}
+
+      {/* Lecture Edit Modal */}
+      {editingSlot && (
+        <LectureEditModal
+          isOpen={!!editingSlot}
+          onClose={() => setEditingSlot(null)}
+          slot={editingSlot.slot}
+          existingOverride={overrides?.overrides?.[editingSlot.slot.id] || null}
+          onSave={(override) => {
+            onEditLecture(editingSlot.slot.id, editingSlot.dayOfWeek, override);
+            setEditingSlot(null);
+          }}
+          onRevert={() => {
+            onRevertLecture(editingSlot.slot.id);
+            setEditingSlot(null);
+          }}
+        />
+      )}
+
+      {/* Add Lecture Modal */}
+      {isAddingNew && (
+        <LectureEditModal
+          isOpen={isAddingNew}
+          onClose={() => setIsAddingNew(false)}
+          mode="add"
+          defaultDayOfWeek={selectedDay}
+          onSave={(newLecture, dayOfWeek) => {
+            const newId = `added_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+            onAddLecture(newId, dayOfWeek || selectedDay, newLecture);
+            setIsAddingNew(false);
+          }}
+        />
       )}
     </div>
   );

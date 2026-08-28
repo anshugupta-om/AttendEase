@@ -1,19 +1,39 @@
 import { AttendanceRecord, OverallStats, SubjectSummary, Timetable } from '../types';
 
-export function calculateAnalytics(records: AttendanceRecord[], timetable: Timetable) {
-  // Collect all unique subjects across weekly schedule
+export function calculateAnalytics(records: AttendanceRecord[], timetable: Timetable, startDate?: string) {
+  // Filter records by start date if provided
+  const activeRecords = startDate
+    ? records.filter(r => r.date >= startDate)
+    : records;
+
+  // Collect all unique subjects across weekly schedule using a composite case-insensitive key
   const subjectMap = new Map<string, { code: string; name: string; faculty: string }>();
+
+  const addSubject = (code: string | undefined, name: string | undefined, faculty: string | undefined) => {
+    const cleanCode = (code || '').trim();
+    const cleanName = (name || '').trim();
+    const cleanFaculty = (faculty || '').trim();
+    const key = (cleanCode || cleanName).toUpperCase();
+    if (!key) return;
+
+    if (!subjectMap.has(key)) {
+      subjectMap.set(key, {
+        code: cleanCode,
+        name: cleanName,
+        faculty: cleanFaculty || 'Unknown / Removed'
+      });
+    }
+  };
 
   Object.values(timetable.weeklySchedule).forEach(daySlots => {
     daySlots.forEach(slot => {
-      if (!subjectMap.has(slot.subjectCode)) {
-        subjectMap.set(slot.subjectCode, {
-          code: slot.subjectCode,
-          name: slot.subjectName,
-          faculty: slot.facultyName
-        });
-      }
+      addSubject(slot.subjectCode, slot.subjectName, slot.facultyName);
     });
+  });
+
+  // Also scan active attendance records to include subjects that may have been soft-deleted from the schedule
+  activeRecords.forEach(r => {
+    addSubject(r.subjectCode, r.subjectName, 'Unknown / Removed');
   });
 
   const subjectSummaries: SubjectSummary[] = [];
@@ -21,8 +41,11 @@ export function calculateAnalytics(records: AttendanceRecord[], timetable: Timet
   let totalAttended = 0;
   let totalMissed = 0;
 
-  subjectMap.forEach((subInfo, code) => {
-    const subRecords = records.filter(r => r.subjectCode === code && r.status !== 'Cancelled');
+  subjectMap.forEach((subInfo, key) => {
+    const subRecords = activeRecords.filter(r => {
+      const rKey = ((r.subjectCode || '').trim() || (r.subjectName || '').trim()).toUpperCase();
+      return rKey === key && r.status !== 'Cancelled';
+    });
     const total = subRecords.length;
     const attended = subRecords.filter(r => r.status === 'Present').length;
     const missed = subRecords.filter(r => r.status === 'Absent').length;
@@ -48,7 +71,7 @@ export function calculateAnalytics(records: AttendanceRecord[], timetable: Timet
     }
 
     subjectSummaries.push({
-      subjectCode: code,
+      subjectCode: subInfo.code,
       subjectName: subInfo.name,
       facultyName: subInfo.faculty,
       totalLectures: total,
@@ -64,21 +87,21 @@ export function calculateAnalytics(records: AttendanceRecord[], timetable: Timet
 
   // Calculate Today's %
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayRecords = records.filter(r => r.date === todayStr && r.status !== 'Cancelled');
+  const todayRecords = activeRecords.filter(r => r.date === todayStr && r.status !== 'Cancelled');
   const todayAttended = todayRecords.filter(r => r.status === 'Present').length;
   const todayPercentage = todayRecords.length > 0 ? Math.round((todayAttended / todayRecords.length) * 100) : 100;
 
   // Calculate Weekly % (last 7 days)
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const weeklyRecords = records.filter(r => new Date(r.date) >= sevenDaysAgo && r.status !== 'Cancelled');
+  const weeklyRecords = activeRecords.filter(r => new Date(r.date) >= sevenDaysAgo && r.status !== 'Cancelled');
   const weeklyAttended = weeklyRecords.filter(r => r.status === 'Present').length;
   const weeklyPercentage = weeklyRecords.length > 0 ? Math.round((weeklyAttended / weeklyRecords.length) * 100) : 100;
 
   // Calculate Monthly % (last 30 days)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const monthlyRecords = records.filter(r => new Date(r.date) >= thirtyDaysAgo && r.status !== 'Cancelled');
+  const monthlyRecords = activeRecords.filter(r => new Date(r.date) >= thirtyDaysAgo && r.status !== 'Cancelled');
   const monthlyAttended = monthlyRecords.filter(r => r.status === 'Present').length;
   const monthlyPercentage = monthlyRecords.length > 0 ? Math.round((monthlyAttended / monthlyRecords.length) * 100) : 100;
 

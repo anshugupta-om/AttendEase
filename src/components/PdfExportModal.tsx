@@ -25,7 +25,7 @@ export const PdfExportModal: React.FC<PdfExportModalProps> = ({
 
   if (!isOpen) return null;
 
-  const { subjectSummaries, stats } = calculateAnalytics(records, timetable);
+  const { subjectSummaries, stats } = calculateAnalytics(records, timetable, user.analyticsStartDate);
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -156,6 +156,7 @@ export const PdfExportModal: React.FC<PdfExportModalProps> = ({
               </span>
               <p className="text-[11px] text-slate-500 font-normal leading-relaxed">
                 Total Classes: {stats.totalLectures} • Attended: {stats.totalAttended} • Missed: {stats.totalMissed}
+                {user.analyticsStartDate && ` • Filtered from: ${new Date(user.analyticsStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
               </p>
             </div>
 
@@ -198,19 +199,21 @@ export const PdfExportModal: React.FC<PdfExportModalProps> = ({
                       <td className="p-2.5 font-bold text-slate-800 uppercase">{sub.subjectName}</td>
                       <td className="p-2.5 text-slate-600">{sub.facultyName}</td>
                       <td className="p-2.5 text-center text-slate-700 font-mono">{sub.totalLectures}</td>
-                      <td className="p-2.5 text-center text-green-600 font-bold font-mono">{sub.attended}</td>
-                      <td className="p-2.5 text-center text-red-500 font-bold font-mono">{sub.missed}</td>
+                      <td className="p-2.5 text-center text-green-600 font-bold font-mono">{sub.totalLectures === 0 ? '—' : sub.attended}</td>
+                      <td className="p-2.5 text-center text-red-500 font-bold font-mono">{sub.totalLectures === 0 ? '—' : sub.missed}</td>
                       <td className="p-2.5 text-right font-bold font-mono">
                         <span
                           className={
-                            sub.percentage >= 75
+                            sub.totalLectures === 0
+                              ? 'text-slate-400 font-normal'
+                              : sub.percentage >= 75
                               ? 'text-green-600'
                               : sub.percentage >= 60
                               ? 'text-amber-600'
                               : 'text-red-500'
                           }
                         >
-                          {sub.percentage}%
+                          {sub.totalLectures === 0 ? 'N/A' : `${sub.percentage}%`}
                         </span>
                       </td>
                     </tr>

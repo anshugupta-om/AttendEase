@@ -2,6 +2,9 @@ export type Branch = 'AIML' | 'DS' | 'CSE' | 'IT' | 'ECE' | 'MECH' | 'CIVIL';
 
 export type Year = 'Second Year' | 'Third Year' | 'Fourth Year';
 
+export const SECTIONS = ['A', 'B', 'C', 'D'] as const;
+export type Section = typeof SECTIONS[number];
+
 export type AttendanceStatus = 'Present' | 'Absent' | 'Cancelled' | 'Holiday';
 
 export interface UserProfile {
@@ -12,12 +15,13 @@ export interface UserProfile {
   branch: Branch;
   year: Year;
   semester: number;
-  section: string;
+  section: Section;
   batch?: string; // e.g. C1, C2
   collegeName: string;
   avatarUrl?: string;
   firstTimeSetupCompleted: boolean;
   themePreference: 'light' | 'dark' | 'system';
+  analyticsStartDate?: string; // YYYY-MM-DD
 }
 
 export interface LectureSlot {
@@ -39,10 +43,12 @@ export interface Timetable {
   branch: Branch;
   year: Year;
   semester: number;
-  section: string;
+  section: Section;
   roomNumber: string;
   uploadedFileName?: string;
   updatedAt: string;
+  isSharedTemplate?: boolean;
+  sourceType?: 'ai-parsed' | 'manual' | 'shared';
   weeklySchedule: {
     Monday: LectureSlot[];
     Tuesday: LectureSlot[];
@@ -85,4 +91,29 @@ export interface OverallStats {
   todayPercentage: number;
   weeklyPercentage: number;
   monthlyPercentage: number;
+}
+
+export interface LectureOverride {
+  subjectName?: string;
+  subjectCode?: string;
+  facultyName?: string;
+  startTime?: string;
+  endTime?: string;
+  roomNumber?: string;
+  isLab?: boolean;
+  batchSection?: string;
+  editedAt: string; // ISO timestamp
+}
+
+export interface AddedLectureSlot extends Omit<LectureSlot, 'id' | 'lectureNumber'> {
+  id: string; // generated UUID
+  origin: 'user-added';
+  createdAt: string; // ISO
+}
+
+export interface UserTimetableOverrides {
+  baseTemplateId: string; // e.g. "AIML_Second_Year_Sem3_SecA"
+  overrides: Record<string, LectureOverride>; // keyed by lectureId
+  addedLectures?: Record<string, AddedLectureSlot>; // new user added lectures, keyed by lectureId
+  removedLectureIds?: Record<string, { removedAt: string }>; // lectureIds that were deleted, keyed by lectureId
 }
